@@ -5,6 +5,7 @@ Python service for polling a small list of public Douyin creators and sending ne
 ## What it does
 
 - polls public creator pages on a fixed interval
+- falls back to headless Playwright when direct HTTP fetches are blocked by Douyin
 - parses the newest videos from embedded page data
 - deduplicates by `video_id` in SQLite
 - sends Feishu card messages with text fallback
@@ -32,11 +33,12 @@ deploy/douyin-feishu-watcher.service
 1. `python3 -m venv .venv`
 2. `. .venv/bin/activate`
 3. `pip install -e .[dev]`
-4. `cp .env.example .env`
-5. `cp creators.json.example creators.json`
-6. Fill in `FEISHU_WEBHOOK_URL` and creator profile URLs
-7. `pytest tests -q`
-8. `python main.py run-once`
+4. `python -m playwright install chromium`
+5. `cp .env.example .env`
+6. `cp creators.json.example creators.json`
+7. Fill in `FEISHU_WEBHOOK_URL` and creator profile URLs
+8. `pytest tests -q`
+9. `python main.py run-once`
 
 ## Environment variables
 
@@ -64,8 +66,9 @@ deploy/douyin-feishu-watcher.service
 
 1. Copy the repo to `/opt/douyin-feishu-watcher`
 2. Create a virtualenv and install dependencies with `pip install -e .`
-3. Create `.env` and `creators.json`
-4. Copy `deploy/douyin-feishu-watcher.service` to `/etc/systemd/system/`
+3. Run `python -m playwright install --with-deps chromium`
+4. Create `.env` and `creators.json`
+5. Copy `deploy/douyin-feishu-watcher.service` to `/etc/systemd/system/`
 5. Run `sudo systemctl daemon-reload`
 6. Run `sudo systemctl enable --now douyin-feishu-watcher`
 7. Verify with `systemctl status douyin-feishu-watcher`
@@ -79,6 +82,7 @@ deploy/douyin-feishu-watcher.service
 
 ## Troubleshooting
 
+- If direct HTTP fetches stop returning HTML, verify Playwright is installed and Chromium can launch
 - If parsing suddenly returns no videos, refresh the fixture and update `app/parser.py`
 - If Feishu cards fail, the notifier automatically falls back to plain text
 - If the service restarts often, inspect `journalctl` and verify `.env` plus creator URLs
