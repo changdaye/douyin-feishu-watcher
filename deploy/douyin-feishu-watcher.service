@@ -1,0 +1,14 @@
+[Unit]
+Description=Douyin Feishu Watcher
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/douyin-feishu-watcher
+EnvironmentFile=/opt/douyin-feishu-watcher/.env
+ExecStart=/opt/douyin-feishu-watcher/.venv/bin/python main.py serve
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
