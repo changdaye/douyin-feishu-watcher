@@ -11,6 +11,7 @@ from app.models import Creator
 @dataclass(slots=True)
 class AppConfig:
     feishu_webhook_url: str | None
+    feishu_bot_secret: str | None
     creators_file: Path
     sqlite_path: Path
     poll_interval_minutes: int = 30
@@ -21,6 +22,7 @@ class AppConfig:
 def load_settings() -> AppConfig:
     return AppConfig(
         feishu_webhook_url=os.getenv("FEISHU_WEBHOOK_URL"),
+        feishu_bot_secret=os.getenv("FEISHU_BOT_SECRET"),
         creators_file=Path(os.getenv("CREATORS_FILE", "creators.json")),
         sqlite_path=Path(os.getenv("SQLITE_PATH", "data/app.db")),
         poll_interval_minutes=int(os.getenv("POLL_INTERVAL_MINUTES", "30")),

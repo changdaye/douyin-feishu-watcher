@@ -1,5 +1,5 @@
 from app.models import VideoRecord
-from app.notifier import build_card_payload, build_text_payload
+from app.notifier import build_card_payload, build_text_payload, enrich_payload_with_signature
 
 
 def test_build_card_payload_contains_core_fields():
@@ -29,3 +29,14 @@ def test_build_text_payload_is_plaintext_fallback():
 
     assert payload["msg_type"] == "text"
     assert "Hello" in payload["content"]["text"]
+
+
+def test_enrich_payload_with_signature_adds_timestamp_and_sign():
+    payload = {"msg_type": "text", "content": {"text": "hello"}}
+
+    enriched = enrich_payload_with_signature(payload, secret="test-secret", timestamp=1700000000)
+
+    assert enriched["timestamp"] == "1700000000"
+    assert enriched["sign"]
+    assert enriched["msg_type"] == "text"
+    assert enriched["content"]["text"] == "hello"

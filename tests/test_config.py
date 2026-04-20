@@ -5,6 +5,7 @@ from app.config import load_creators, load_settings
 
 def test_load_settings_defaults(tmp_path, monkeypatch):
     monkeypatch.delenv("FEISHU_WEBHOOK_URL", raising=False)
+    monkeypatch.delenv("FEISHU_BOT_SECRET", raising=False)
     monkeypatch.setenv("CREATORS_FILE", str(tmp_path / "creators.json"))
     monkeypatch.setenv("SQLITE_PATH", str(tmp_path / "app.db"))
 
@@ -13,6 +14,7 @@ def test_load_settings_defaults(tmp_path, monkeypatch):
     assert settings.poll_interval_minutes == 30
     assert settings.request_timeout_seconds == 15
     assert settings.failure_alert_threshold == 3
+    assert settings.feishu_bot_secret is None
 
 
 def test_load_creators_only_enabled_items(tmp_path):

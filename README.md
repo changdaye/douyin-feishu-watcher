@@ -41,6 +41,7 @@ deploy/douyin-feishu-watcher.service
 ## Environment variables
 
 - `FEISHU_WEBHOOK_URL`: Feishu bot webhook URL
+- `FEISHU_BOT_SECRET`: optional Feishu bot signing secret when the bot enables security key checking
 - `CREATORS_FILE`: creator list JSON path, default `creators.json`
 - `SQLITE_PATH`: SQLite database path, default `data/app.db`
 - `POLL_INTERVAL_MINUTES`: scheduler interval, default `30`

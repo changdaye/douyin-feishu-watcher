@@ -24,6 +24,7 @@ def build_job() -> Callable[[], None]:
     notifier = FeishuNotifier(
         webhook_url=settings.feishu_webhook_url,
         timeout_seconds=settings.request_timeout_seconds,
+        bot_secret=settings.feishu_bot_secret,
     )
     service = PollService(
         fetcher=fetcher,
