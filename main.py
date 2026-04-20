@@ -30,6 +30,7 @@ def build_job() -> Callable[[], None]:
         parser=parse_creator_videos,
         database=database,
         notifier=notifier,
+        failure_alert_threshold=settings.failure_alert_threshold,
     )
 
     def job() -> None:

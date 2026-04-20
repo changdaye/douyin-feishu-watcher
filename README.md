@@ -70,6 +70,12 @@ deploy/douyin-feishu-watcher.service
 7. Verify with `systemctl status douyin-feishu-watcher`
 8. Check runtime output with `journalctl -u douyin-feishu-watcher -f`
 
+## Operational notes
+
+- The very first successful poll builds a baseline and does not send historical videos
+- After the baseline exists, only newly discovered video ids are pushed to Feishu
+- Repeated failures for the same creator trigger a Feishu text alert once the threshold is reached
+
 ## Troubleshooting
 
 - If parsing suddenly returns no videos, refresh the fixture and update `app/parser.py`

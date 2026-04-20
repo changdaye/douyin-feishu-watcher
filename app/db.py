@@ -31,12 +31,28 @@ class Database:
                 )
                 """
             )
+            conn.execute(
+                """
+                CREATE TABLE IF NOT EXISTS creator_failures (
+                    creator_key TEXT PRIMARY KEY,
+                    failure_count INTEGER NOT NULL DEFAULT 0
+                )
+                """
+            )
 
     def has_video(self, video_id: str) -> bool:
         with self.connect() as conn:
             row = conn.execute(
                 "SELECT 1 FROM videos WHERE video_id = ? LIMIT 1",
                 (video_id,),
+            ).fetchone()
+        return row is not None
+
+    def has_any_videos_for_creator(self, creator_name: str) -> bool:
+        with self.connect() as conn:
+            row = conn.execute(
+                "SELECT 1 FROM videos WHERE creator_name = ? LIMIT 1",
+                (creator_name,),
             ).fetchone()
         return row is not None
 
@@ -56,7 +72,31 @@ class Database:
                     video.video_url,
                     video.publish_time.isoformat() if video.publish_time else None,
                     video.cover_url,
-                    notified,
+                    int(notified),
                     "sent" if notified else "pending",
                 ),
+            )
+
+    def get_failure_count(self, creator_key: str) -> int:
+        with self.connect() as conn:
+            row = conn.execute(
+                "SELECT failure_count FROM creator_failures WHERE creator_key = ?",
+                (creator_key,),
+            ).fetchone()
+        return int(row[0]) if row else 0
+
+    def record_failure(self, creator_key: str) -> int:
+        new_value = self.get_failure_count(creator_key) + 1
+        with self.connect() as conn:
+            conn.execute(
+                "INSERT OR REPLACE INTO creator_failures (creator_key, failure_count) VALUES (?, ?)",
+                (creator_key, new_value),
+            )
+        return new_value
+
+    def reset_failures(self, creator_key: str) -> None:
+        with self.connect() as conn:
+            conn.execute(
+                "INSERT OR REPLACE INTO creator_failures (creator_key, failure_count) VALUES (?, 0)",
+                (creator_key,),
             )

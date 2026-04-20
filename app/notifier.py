@@ -49,9 +49,16 @@ class FeishuNotifier:
         self.webhook_url = webhook_url
         self.client = httpx.Client(timeout=timeout_seconds)
 
+    def _post(self, payload: dict) -> httpx.Response:
+        return self.client.post(self.webhook_url, json=payload)
+
     def send_video(self, video: VideoRecord) -> None:
-        response = self.client.post(self.webhook_url, json=build_card_payload(video))
+        response = self._post(build_card_payload(video))
         if response.is_success:
             return
-        fallback = self.client.post(self.webhook_url, json=build_text_payload(video))
+        fallback = self._post(build_text_payload(video))
         fallback.raise_for_status()
+
+    def send_alert(self, text: str) -> None:
+        response = self._post({"msg_type": "text", "content": {"text": text}})
+        response.raise_for_status()
