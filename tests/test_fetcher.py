@@ -1,3 +1,5 @@
+import pytest
+
 from app.fetcher import CreatorPageFetcher, build_aweme_post_api_url, build_render_data_html
 
 
@@ -34,16 +36,6 @@ class FakeClient:
         return self.response
 
 
-class FakeBrowserFetcher:
-    def __init__(self, html: str):
-        self.html = html
-        self.called = []
-
-    def fetch(self, profile_url: str) -> str:
-        self.called.append(profile_url)
-        return self.html
-
-
 def test_build_render_data_html_wraps_payload():
     html = build_render_data_html({'aweme_list': [{'aweme_id': '1'}]})
 
@@ -77,7 +69,7 @@ def test_creator_page_fetcher_prefers_aweme_api_when_cookie_exists():
             )
         }
     )
-    fetcher = CreatorPageFetcher(timeout_seconds=15, client=client, browser_fetcher=FakeBrowserFetcher('unused'), douyin_cookie='sessionid=test')
+    fetcher = CreatorPageFetcher(timeout_seconds=15, client=client, douyin_cookie='sessionid=test')
 
     html = fetcher.fetch(profile_url)
 
@@ -98,43 +90,22 @@ def test_creator_page_fetcher_returns_http_html_when_present():
     assert 'RENDER_DATA' in html
 
 
-def test_creator_page_fetcher_falls_back_to_browser_on_empty_body():
-    browser = FakeBrowserFetcher('<html><script id="RENDER_DATA">{}</script></html>')
-    fetcher = CreatorPageFetcher(
-        timeout_seconds=15,
-        client=FakeClient(response=FakeResponse(text='', content_type='application/json')),
-        browser_fetcher=browser,
-    )
-
-    html = fetcher.fetch('https://example.com/user')
-
-    assert 'RENDER_DATA' in html
-    assert browser.called == ['https://example.com/user']
-
-
-def test_creator_page_fetcher_falls_back_to_browser_on_challenge_shell():
+def test_creator_page_fetcher_raises_when_douyin_html_is_challenge_shell_without_cookie():
     challenge_html = '<html><head><meta charset="UTF-8" /></head><body></body><script>var __ac_nonce="x";var acrawler={};</script></html>'
-    browser = FakeBrowserFetcher('<html><script id="RENDER_DATA">{}</script></html>')
     fetcher = CreatorPageFetcher(
         timeout_seconds=15,
         client=FakeClient(response=FakeResponse(text=challenge_html, content_type='text/html')),
-        browser_fetcher=browser,
     )
 
-    html = fetcher.fetch('https://example.com/user')
-
-    assert 'RENDER_DATA' in html
-    assert browser.called == ['https://example.com/user']
+    with pytest.raises(RuntimeError, match='DOUYIN_COOKIE'):
+        fetcher.fetch('https://www.douyin.com/user/abc123')
 
 
-def test_creator_page_fetcher_falls_back_to_browser_on_http_error():
-    browser = FakeBrowserFetcher('<html>browser</html>')
+def test_creator_page_fetcher_raises_on_http_error_without_cookie():
     fetcher = CreatorPageFetcher(
         timeout_seconds=15,
         client=FakeClient(error=RuntimeError('boom')),
-        browser_fetcher=browser,
     )
 
-    html = fetcher.fetch('https://example.com/user')
-
-    assert html == '<html>browser</html>'
+    with pytest.raises(RuntimeError, match='boom'):
+        fetcher.fetch('https://example.com/user')

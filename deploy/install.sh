@@ -39,7 +39,7 @@ if ! command -v apt-get >/dev/null 2>&1; then
   exit 1
 fi
 
-echo "[1/7] Installing OS dependencies..."
+echo "[1/6] Installing OS dependencies..."
 $SUDO apt-get update
 $SUDO apt-get install -y \
   git \
@@ -59,14 +59,11 @@ python -m pip install --upgrade pip setuptools wheel
 echo "[3/7] Installing Python project..."
 pip install -e "$APP_DIR"
 
-echo "[4/7] Installing Playwright Chromium and Linux deps..."
-python -m playwright install --with-deps chromium
-
-echo "[5/7] Preparing runtime directories and permissions..."
+echo "[4/6] Preparing runtime directories and permissions..."
 mkdir -p "$APP_DIR/data" "$APP_DIR/logs"
 chmod 600 "$APP_DIR/local.runtime.json" "$APP_DIR/creators.json"
 
-echo "[6/7] Writing systemd service..."
+echo "[5/6] Writing systemd service..."
 $SUDO tee "$SYSTEMD_UNIT_PATH" >/dev/null <<UNIT
 [Unit]
 Description=Douyin Feishu Watcher
@@ -83,7 +80,7 @@ RestartSec=5
 WantedBy=multi-user.target
 UNIT
 
-echo "[7/7] Enabling and starting service..."
+echo "[6/6] Enabling and starting service..."
 $SUDO systemctl daemon-reload
 $SUDO systemctl enable --now "$SERVICE_NAME"
 

@@ -6,7 +6,6 @@ Python service for polling a small list of public Douyin creators and sending ne
 
 - polls public creator pages on a fixed interval
 - uses Douyin login cookie to call the creator post API directly when available
-- falls back to headless Playwright when direct HTTP fetches are blocked by Douyin
 - parses the newest videos from embedded page data
 - deduplicates by `video_id` in SQLite
 - sends Feishu card messages with text fallback
@@ -35,12 +34,11 @@ deploy/douyin-feishu-watcher.service
 1. `python3 -m venv .venv`
 2. `. .venv/bin/activate`
 3. `pip install -e .[dev]`
-4. `python -m playwright install chromium`
-5. `cp local.runtime.json.example local.runtime.json`
-6. `cp creators.json.example creators.json`
-7. Fill in `local.runtime.json` and creator profile URLs
-8. `pytest tests -q`
-9. `python main.py run-once`
+4. `cp local.runtime.json.example local.runtime.json`
+5. `cp creators.json.example creators.json`
+6. Fill in `local.runtime.json` and creator profile URLs
+7. `pytest tests -q`
+8. `python main.py run-once`
 
 ## Runtime config
 
@@ -83,7 +81,6 @@ The script will:
 - install OS dependencies
 - create `.venv`
 - install the Python package
-- install Playwright Chromium and required Linux libraries
 - write the systemd service
 - enable and start the service
 
@@ -103,7 +100,7 @@ The script will:
 
 ## Troubleshooting
 
-- If direct HTTP fetches stop returning HTML, verify Playwright is installed and Chromium can launch
+- If direct HTTP fetches stop working, refresh `douyin_cookie` in `local.runtime.json`
 - If parsing suddenly returns no videos, refresh the fixture and update `app/parser.py`
 - If Feishu cards fail, the notifier automatically falls back to plain text
 - If the service restarts often, inspect `journalctl` and verify `.env` plus creator URLs
