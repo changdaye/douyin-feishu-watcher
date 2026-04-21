@@ -26,6 +26,7 @@ app/
 creators.json.example
 main.py
 deploy/douyin-feishu-watcher.service
+  build-release.sh
   install.sh
 ```
 
@@ -38,7 +39,7 @@ deploy/douyin-feishu-watcher.service
 5. `cp creators.json.example creators.json`
 6. Fill in `local.runtime.json` and creator profile URLs
 7. `pytest tests -q`
-8. `python main.py run-once`
+8. `douyin-feishu-watcher run-once`
 
 ## Runtime config
 
@@ -67,20 +68,60 @@ Recommended keys inside `local.runtime.json`:
 ]
 ```
 
+## Release bundle
+
+For low-resource or unstable servers, build a fully offline release bundle instead of installing from Git over SSH.
+
+### Build locally on Linux
+
+```bash
+bash deploy/build-release.sh
+```
+
+This creates an archive like:
+
+```text
+dist/douyin-feishu-watcher-linux-x86_64.tar.gz
+```
+
+The archive contains:
+- `wheelhouse/` with Python wheels
+- `install-service.sh` for one-command installation
+- `local.runtime.json.example`
+- `creators.json.example`
+- the systemd unit template
+
+### Install from the bundle on the server
+
+```bash
+tar -xzf douyin-feishu-watcher-linux-x86_64.tar.gz
+cd douyin-feishu-watcher-linux-x86_64
+cp local.runtime.json.example local.runtime.json
+cp creators.json.example creators.json
+# fill in local.runtime.json and creators.json
+bash install-service.sh
+```
+
+### GitHub Actions
+
+The repository includes `.github/workflows/release-bundle.yml`.
+It builds on GitHub Actions with Python 3.9 so the resulting Linux bundle matches EL9-style servers more closely.
+You can trigger it manually from GitHub Actions or publish a `v*` tag to build and upload the Linux bundle artifact automatically.
+
 ## Deployment
 
-### One-click server install (recommended)
+### One-click install from a checkout
 
-On an Ubuntu/Debian server, after cloning the repo and preparing `local.runtime.json` plus `creators.json`, run:
+On a server where you already cloned the repo and prepared `local.runtime.json` plus `creators.json`, run:
 
 ```bash
 bash deploy/install.sh
 ```
 
 The script will:
-- install OS dependencies
+- install basic OS dependencies
 - create `.venv`
-- install the Python package
+- install from a bundled wheelhouse when present, otherwise from the source checkout
 - write the systemd service
 - enable and start the service
 

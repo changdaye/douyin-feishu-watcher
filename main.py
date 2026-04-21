@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 from collections.abc import Callable
+from typing import Optional
 
 from app.config import load_creators, load_settings
 from app.db import Database
@@ -51,7 +52,7 @@ def build_runner() -> SchedulerRunner:
     return SchedulerRunner(interval_minutes=settings.poll_interval_minutes, job=build_job())
 
 
-def main(argv: list[str] | None = None) -> int:
+def main(argv: Optional[list[str]] = None) -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("mode", choices=["run-once", "serve"])
     args = parser.parse_args(argv)

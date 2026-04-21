@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Iterable
+from typing import Iterable, Optional
 
 from app.models import Creator
 
@@ -11,7 +11,7 @@ class PollResult:
     creator_name: str
     new_video_ids: list[str]
     sent_count: int
-    error: str | None = None
+    error: Optional[str] = None
     baseline_initialized: bool = False
 
 

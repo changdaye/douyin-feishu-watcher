@@ -4,15 +4,16 @@ import json
 import os
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Any, Dict, Optional
 
 from app.models import Creator
 
 
 @dataclass(slots=True)
 class AppConfig:
-    feishu_webhook_url: str | None
-    feishu_bot_secret: str | None
-    douyin_cookie: str | None
+    feishu_webhook_url: Optional[str]
+    feishu_bot_secret: Optional[str]
+    douyin_cookie: Optional[str]
     creators_file: Path
     sqlite_path: Path
     poll_interval_minutes: int = 30
@@ -59,7 +60,7 @@ def _load_json_defaults() -> dict[str, object]:
     return {}
 
 
-def _get_config_value(name: str, default: str | None = None):
+def _get_config_value(name: str, default: Optional[str] = None) -> Any:
     if name in os.environ:
         return os.environ[name]
 

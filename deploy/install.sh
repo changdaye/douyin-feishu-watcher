@@ -1,16 +1,18 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+if [[ -f "$SCRIPT_DIR/pyproject.toml" ]]; then
+  APP_DIR="$SCRIPT_DIR"
+else
+  APP_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
+fi
+
 SERVICE_NAME="${SERVICE_NAME:-douyin-feishu-watcher}"
-APP_DIR="${APP_DIR:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}"
 PYTHON_BIN="${PYTHON_BIN:-python3}"
 VENV_DIR="${VENV_DIR:-$APP_DIR/.venv}"
 SYSTEMD_UNIT_PATH="/etc/systemd/system/${SERVICE_NAME}.service"
-
-if [[ ! -f "$APP_DIR/pyproject.toml" || ! -f "$APP_DIR/main.py" ]]; then
-  echo "[ERROR] APP_DIR does not look like the douyin-feishu-watcher repository: $APP_DIR" >&2
-  exit 1
-fi
+WHEELHOUSE_DIR="${WHEELHOUSE_DIR:-$APP_DIR/wheelhouse}"
 
 if [[ ! -f "$APP_DIR/local.runtime.json" ]]; then
   echo "[ERROR] Missing $APP_DIR/local.runtime.json" >&2
@@ -34,36 +36,36 @@ if [[ "${EUID:-$(id -u)}" -eq 0 ]]; then
   SUDO=""
 fi
 
-if ! command -v apt-get >/dev/null 2>&1; then
-  echo "[ERROR] This install script currently supports Ubuntu/Debian systems with apt-get." >&2
+if command -v apt-get >/dev/null 2>&1; then
+  INSTALL_CMD="$SUDO apt-get update && $SUDO apt-get install -y python3 python3-venv python3-pip ca-certificates sqlite3"
+elif command -v dnf >/dev/null 2>&1; then
+  INSTALL_CMD="$SUDO dnf install -y python3 python3-pip ca-certificates sqlite"
+else
+  echo "[ERROR] Supported package manager not found (apt-get or dnf)." >&2
   exit 1
 fi
 
-echo "[1/6] Installing OS dependencies..."
-$SUDO apt-get update
-$SUDO apt-get install -y \
-  git \
-  python3 \
-  python3-venv \
-  python3-pip \
-  ca-certificates \
-  curl \
-  sqlite3
+echo "[1/5] Installing base OS dependencies..."
+bash -lc "$INSTALL_CMD"
 
-echo "[2/7] Creating virtual environment..."
+echo "[2/5] Creating virtual environment..."
 "$PYTHON_BIN" -m venv "$VENV_DIR"
 # shellcheck disable=SC1091
 source "$VENV_DIR/bin/activate"
-python -m pip install --upgrade pip setuptools wheel
 
-echo "[3/7] Installing Python project..."
-pip install -e "$APP_DIR"
+if [[ -d "$WHEELHOUSE_DIR" ]] && find "$WHEELHOUSE_DIR" -name '*.whl' | grep -q .; then
+  echo "[3/5] Installing from bundled wheelhouse..."
+  pip install --no-index --find-links "$WHEELHOUSE_DIR" douyin-feishu-watcher
+else
+  echo "[3/5] Installing from source checkout..."
+  pip install -e "$APP_DIR"
+fi
 
-echo "[4/6] Preparing runtime directories and permissions..."
+echo "[4/5] Preparing runtime directories and permissions..."
 mkdir -p "$APP_DIR/data" "$APP_DIR/logs"
 chmod 600 "$APP_DIR/local.runtime.json" "$APP_DIR/creators.json"
 
-echo "[5/6] Writing systemd service..."
+echo "[5/5] Writing and starting systemd service..."
 $SUDO tee "$SYSTEMD_UNIT_PATH" >/dev/null <<UNIT
 [Unit]
 Description=Douyin Feishu Watcher
@@ -72,7 +74,7 @@ After=network.target
 [Service]
 Type=simple
 WorkingDirectory=$APP_DIR
-ExecStart=$VENV_DIR/bin/python $APP_DIR/main.py serve
+ExecStart=$VENV_DIR/bin/douyin-feishu-watcher serve
 Restart=always
 RestartSec=5
 
@@ -80,7 +82,6 @@ RestartSec=5
 WantedBy=multi-user.target
 UNIT
 
-echo "[6/6] Enabling and starting service..."
 $SUDO systemctl daemon-reload
 $SUDO systemctl enable --now "$SERVICE_NAME"
 
@@ -91,4 +92,4 @@ echo
 printf 'Deployment completed. Useful commands:\n'
 printf '  journalctl -u %s -f\n' "$SERVICE_NAME"
 printf '  systemctl status %s\n' "$SERVICE_NAME"
-printf '  %s/main.py run-once\n' "$VENV_DIR/bin/python"
+printf '  %s run-once\n' "$VENV_DIR/bin/douyin-feishu-watcher"

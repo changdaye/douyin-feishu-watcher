@@ -20,8 +20,11 @@ class FakeResponse:
         return self._json_data
 
 
+from typing import Optional
+
+
 class FakeClient:
-    def __init__(self, response: FakeResponse | None = None, error: Exception | None = None, responses_by_url: dict | None = None):
+    def __init__(self, response: Optional[FakeResponse] = None, error: Optional[Exception] = None, responses_by_url: Optional[dict] = None):
         self.response = response
         self.error = error
         self.responses_by_url = responses_by_url or {}

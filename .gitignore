@@ -10,3 +10,4 @@ creators.json
 /data/*.db
 /logs/
 *.egg-info/
+dist/

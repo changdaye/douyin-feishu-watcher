@@ -6,13 +6,16 @@ build-backend = "setuptools.build_meta"
 name = "douyin-feishu-watcher"
 version = "0.1.0"
 description = "Poll public Douyin creators and push updates to a Feishu bot"
-requires-python = ">=3.11"
+requires-python = ">=3.9"
 dependencies = [
   "APScheduler==3.11.0",
   "beautifulsoup4==4.13.3",
   "httpx==0.28.1",
   "lxml==5.3.1",
 ]
+
+[project.scripts]
+douyin-feishu-watcher = "main:main"
 
 [project.optional-dependencies]
 dev = [
@@ -21,3 +24,7 @@ dev = [
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+
+[tool.setuptools]
+packages = ["app"]
+py-modules = ["main"]

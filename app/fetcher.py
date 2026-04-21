@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 from urllib.parse import urlparse
+from typing import Any, Optional
 
 import httpx
 
@@ -20,7 +21,7 @@ def build_render_data_html(payload: dict) -> str:
     )
 
 
-def extract_sec_user_id(profile_url: str) -> str | None:
+def extract_sec_user_id(profile_url: str) -> Optional[str]:
     parsed = urlparse(profile_url)
     parts = [part for part in parsed.path.split('/') if part]
     if len(parts) >= 2 and parts[0] == 'user':
@@ -44,7 +45,7 @@ def build_aweme_post_api_url(profile_url: str) -> str:
 
 
 class CreatorPageFetcher:
-    def __init__(self, *, timeout_seconds: int, client=None, douyin_cookie: str | None = None) -> None:
+    def __init__(self, *, timeout_seconds: int, client=None, douyin_cookie: Optional[str] = None) -> None:
         self.timeout_seconds = timeout_seconds
         self.douyin_cookie = douyin_cookie
         headers = {
@@ -61,7 +62,7 @@ class CreatorPageFetcher:
             headers=headers,
         )
 
-    def _response_contains_usable_render_data(self, response: httpx.Response | object) -> bool:
+    def _response_contains_usable_render_data(self, response: Any) -> bool:
         text = getattr(response, 'text', '') or ''
         headers = getattr(response, 'headers', {}) or {}
         content_type = str(headers.get('content-type', '')).lower()
@@ -77,7 +78,7 @@ class CreatorPageFetcher:
             return False
         return True
 
-    def _fetch_via_aweme_api(self, profile_url: str) -> str | None:
+    def _fetch_via_aweme_api(self, profile_url: str) -> Optional[str]:
         if not self.douyin_cookie:
             return None
         sec_user_id = extract_sec_user_id(profile_url)
@@ -93,7 +94,7 @@ class CreatorPageFetcher:
         return None
 
     def fetch(self, profile_url: str) -> str:
-        api_error: Exception | None = None
+        api_error: Optional[Exception] = None
         try:
             api_html = self._fetch_via_aweme_api(profile_url)
             if api_html:

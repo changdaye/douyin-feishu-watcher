@@ -5,13 +5,14 @@ import copy
 import hashlib
 import hmac
 from datetime import datetime
+from typing import Optional
 
 import httpx
 
 from app.models import VideoRecord
 
 
-def _format_publish_time(value: datetime | None) -> str:
+def _format_publish_time(value: Optional[datetime]) -> str:
     if value is None:
         return "未知"
     return value.astimezone().strftime("%Y-%m-%d %H:%M:%S")
@@ -23,7 +24,7 @@ def _make_sign(secret: str, timestamp: int) -> str:
     return base64.b64encode(hmac_code).decode("utf-8")
 
 
-def enrich_payload_with_signature(payload: dict, *, secret: str, timestamp: int | None = None) -> dict:
+def enrich_payload_with_signature(payload: dict, *, secret: str, timestamp: Optional[int] = None) -> dict:
     ts = int(datetime.now().timestamp()) if timestamp is None else timestamp
     enriched = copy.deepcopy(payload)
     enriched["timestamp"] = str(ts)
@@ -63,7 +64,7 @@ def build_text_payload(video: VideoRecord) -> dict:
 
 
 class FeishuNotifier:
-    def __init__(self, *, webhook_url: str, timeout_seconds: int, bot_secret: str | None = None) -> None:
+    def __init__(self, *, webhook_url: str, timeout_seconds: int, bot_secret: Optional[str] = None) -> None:
         self.webhook_url = webhook_url
         self.bot_secret = bot_secret
         self.client = httpx.Client(timeout=timeout_seconds)
