@@ -3,8 +3,10 @@ __pycache__/
 .pytest_cache/
 *.pyc
 .env
+local.runtime.json
+runtime.local.json
+config.local.json
+creators.json
 /data/*.db
 /logs/
-
 *.egg-info/
-creators.json

@@ -35,22 +35,26 @@ deploy/douyin-feishu-watcher.service
 2. `. .venv/bin/activate`
 3. `pip install -e .[dev]`
 4. `python -m playwright install chromium`
-5. `cp .env.example .env`
+5. `cp local.runtime.json.example local.runtime.json`
 6. `cp creators.json.example creators.json`
-7. Fill in `FEISHU_WEBHOOK_URL` and creator profile URLs
+7. Fill in `local.runtime.json` and creator profile URLs
 8. `pytest tests -q`
 9. `python main.py run-once`
 
-## Environment variables
+## Runtime config
 
-- `FEISHU_WEBHOOK_URL`: Feishu bot webhook URL
-- `FEISHU_BOT_SECRET`: optional Feishu bot signing secret when the bot enables security key checking
-- `CREATORS_FILE`: creator list JSON path, default `creators.json`
-- `SQLITE_PATH`: SQLite database path, default `data/app.db`
-- `POLL_INTERVAL_MINUTES`: scheduler interval, default `30`
-- `REQUEST_TIMEOUT_SECONDS`: HTTP timeout, default `15`
-- `DOUYIN_COOKIE`: required for stable access to Douyin creator pages and post APIs
-- `FAILURE_ALERT_THRESHOLD`: reserved threshold for future alert escalation, default `3`
+The service now prefers a local JSON file such as `local.runtime.json` and falls back to `.env` only for compatibility.
+
+Recommended keys inside `local.runtime.json`:
+
+- `feishu_webhook_url`: Feishu bot webhook URL
+- `feishu_bot_secret`: optional Feishu bot signing secret when the bot enables security key checking
+- `douyin_cookie`: required for stable access to Douyin creator pages and post APIs
+- `creators_file`: creator list JSON path, default `creators.json`
+- `sqlite_path`: SQLite database path, default `data/app.db`
+- `poll_interval_minutes`: scheduler interval, default `30`
+- `request_timeout_seconds`: HTTP timeout, default `15`
+- `failure_alert_threshold`: alert threshold, default `3`
 
 ## Creator file format
 
@@ -69,7 +73,7 @@ deploy/douyin-feishu-watcher.service
 1. Copy the repo to `/opt/douyin-feishu-watcher`
 2. Create a virtualenv and install dependencies with `pip install -e .`
 3. Run `python -m playwright install --with-deps chromium`
-4. Create `.env` and `creators.json`
+4. Create `local.runtime.json` and `creators.json`
 5. Copy `deploy/douyin-feishu-watcher.service` to `/etc/systemd/system/`
 5. Run `sudo systemctl daemon-reload`
 6. Run `sudo systemctl enable --now douyin-feishu-watcher`
