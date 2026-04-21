@@ -22,6 +22,9 @@ cp "$ROOT_DIR/creators.json.example" "$ARCHIVE_DIR/creators.json.example"
 mkdir -p "$ARCHIVE_DIR/deploy"
 cp "$ROOT_DIR/deploy/douyin-feishu-watcher.service" "$ARCHIVE_DIR/deploy/"
 cp "$ROOT_DIR/deploy/install.sh" "$ARCHIVE_DIR/deploy/"
+cp "$ROOT_DIR/deploy/run-once.sh" "$ARCHIVE_DIR/deploy/"
+cp "$ROOT_DIR/deploy/service-status.sh" "$ARCHIVE_DIR/deploy/"
+cp "$ROOT_DIR/deploy/service-logs.sh" "$ARCHIVE_DIR/deploy/"
 cat > "$ARCHIVE_DIR/install-service.sh" <<'WRAP'
 #!/usr/bin/env bash
 set -Eeuo pipefail
@@ -29,6 +32,30 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 exec "$SCRIPT_DIR/deploy/install.sh" "$@"
 WRAP
 chmod +x "$ARCHIVE_DIR/install-service.sh"
+
+cat > "$ARCHIVE_DIR/run-once.sh" <<'WRAP'
+#!/usr/bin/env bash
+set -Eeuo pipefail
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+exec "$SCRIPT_DIR/deploy/run-once.sh" "$@"
+WRAP
+chmod +x "$ARCHIVE_DIR/run-once.sh"
+
+cat > "$ARCHIVE_DIR/service-status.sh" <<'WRAP'
+#!/usr/bin/env bash
+set -Eeuo pipefail
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+exec "$SCRIPT_DIR/deploy/service-status.sh" "$@"
+WRAP
+chmod +x "$ARCHIVE_DIR/service-status.sh"
+
+cat > "$ARCHIVE_DIR/service-logs.sh" <<'WRAP'
+#!/usr/bin/env bash
+set -Eeuo pipefail
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+exec "$SCRIPT_DIR/deploy/service-logs.sh" "$@"
+WRAP
+chmod +x "$ARCHIVE_DIR/service-logs.sh"
 
 cat > "$ARCHIVE_DIR/RELEASE_INFO.txt" <<INFO
 Archive: $ARCHIVE_BASENAME.tar.gz
