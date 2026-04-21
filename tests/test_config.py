@@ -7,6 +7,7 @@ def test_load_settings_defaults(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
     monkeypatch.delenv("FEISHU_WEBHOOK_URL", raising=False)
     monkeypatch.delenv("FEISHU_BOT_SECRET", raising=False)
+    monkeypatch.delenv("DOUYIN_COOKIE", raising=False)
     monkeypatch.setenv("CREATORS_FILE", str(tmp_path / "creators.json"))
     monkeypatch.setenv("SQLITE_PATH", str(tmp_path / "app.db"))
 
@@ -16,6 +17,7 @@ def test_load_settings_defaults(tmp_path, monkeypatch):
     assert settings.request_timeout_seconds == 15
     assert settings.failure_alert_threshold == 3
     assert settings.feishu_bot_secret is None
+    assert settings.douyin_cookie is None
 
 
 def test_load_settings_reads_local_env_file(tmp_path, monkeypatch):
@@ -23,18 +25,21 @@ def test_load_settings_reads_local_env_file(tmp_path, monkeypatch):
     env_file.write_text(
         'FEISHU_WEBHOOK_URL=https://open.feishu.cn/open-apis/bot/v2/hook/test\n'
         'FEISHU_BOT_SECRET=secret-value\n'
+        'DOUYIN_COOKIE=sessionid=test-cookie\n'
         'REQUEST_TIMEOUT_SECONDS=21\n',
         encoding='utf-8',
     )
     monkeypatch.chdir(tmp_path)
     monkeypatch.delenv('FEISHU_WEBHOOK_URL', raising=False)
     monkeypatch.delenv('FEISHU_BOT_SECRET', raising=False)
+    monkeypatch.delenv('DOUYIN_COOKIE', raising=False)
     monkeypatch.delenv('REQUEST_TIMEOUT_SECONDS', raising=False)
 
     settings = load_settings()
 
     assert settings.feishu_webhook_url == 'https://open.feishu.cn/open-apis/bot/v2/hook/test'
     assert settings.feishu_bot_secret == 'secret-value'
+    assert settings.douyin_cookie == 'sessionid=test-cookie'
     assert settings.request_timeout_seconds == 21
 
 

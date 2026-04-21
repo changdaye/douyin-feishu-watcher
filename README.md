@@ -5,6 +5,7 @@ Python service for polling a small list of public Douyin creators and sending ne
 ## What it does
 
 - polls public creator pages on a fixed interval
+- uses Douyin login cookie to call the creator post API directly when available
 - falls back to headless Playwright when direct HTTP fetches are blocked by Douyin
 - parses the newest videos from embedded page data
 - deduplicates by `video_id` in SQLite
@@ -48,6 +49,7 @@ deploy/douyin-feishu-watcher.service
 - `SQLITE_PATH`: SQLite database path, default `data/app.db`
 - `POLL_INTERVAL_MINUTES`: scheduler interval, default `30`
 - `REQUEST_TIMEOUT_SECONDS`: HTTP timeout, default `15`
+- `DOUYIN_COOKIE`: required for stable access to Douyin creator pages and post APIs
 - `FAILURE_ALERT_THRESHOLD`: reserved threshold for future alert escalation, default `3`
 
 ## Creator file format

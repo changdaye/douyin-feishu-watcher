@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 from contextlib import suppress
+from urllib.parse import urlparse
 
 import httpx
 
@@ -20,12 +21,36 @@ def build_render_data_html(payload: dict) -> str:
     )
 
 
+def extract_sec_user_id(profile_url: str) -> str | None:
+    parsed = urlparse(profile_url)
+    parts = [part for part in parsed.path.split('/') if part]
+    if len(parts) >= 2 and parts[0] == 'user':
+        return parts[1]
+    return None
+
+
+def build_aweme_post_api_url(profile_url: str) -> str:
+    sec_user_id = extract_sec_user_id(profile_url)
+    if not sec_user_id:
+        raise ValueError(f'Unsupported Douyin profile URL: {profile_url}')
+    return (
+        'https://www.douyin.com/aweme/v1/web/aweme/post/'
+        '?device_platform=webapp&aid=6383&channel=channel_pc_web'
+        f'&sec_user_id={sec_user_id}'
+        '&max_cursor=0&locate_query=false&show_live_replay_strategy=1'
+        '&need_time_list=1&time_list_query=0&whale_cut_token=&cut_version=1'
+        '&count=18&publish_video_strategy_type=2&from_user_page=1'
+        '&version_code=290100&version_name=29.1.0'
+    )
+
+
 class PlaywrightBrowserFetcher:
-    def __init__(self, *, timeout_seconds: int, user_agent: str = DEFAULT_USER_AGENT) -> None:
+    def __init__(self, *, timeout_seconds: int, user_agent: str = DEFAULT_USER_AGENT, douyin_cookie: str | None = None) -> None:
         from playwright.sync_api import sync_playwright
 
         self.timeout_ms = timeout_seconds * 1000
         self.user_agent = user_agent
+        self.douyin_cookie = douyin_cookie
         self._sync_playwright = sync_playwright
         self._playwright = None
         self._browser = None
@@ -38,22 +63,26 @@ class PlaywrightBrowserFetcher:
         self._playwright = self._sync_playwright().start()
         self._browser = self._playwright.chromium.launch(headless=True)
         self._context = self._browser.new_context(locale='zh-CN', user_agent=self.user_agent)
+        if self.douyin_cookie:
+            cookies = []
+            for part in self.douyin_cookie.split(';'):
+                item = part.strip()
+                if not item or '=' not in item:
+                    continue
+                name, value = item.split('=', 1)
+                name = name.strip()
+                value = value.strip()
+                if name and value:
+                    cookies.append({'name': name, 'value': value, 'domain': '.douyin.com', 'path': '/'})
+            if cookies:
+                self._context.add_cookies(cookies)
         return self._context
 
     def fetch(self, profile_url: str) -> str:
         context = self._ensure_context()
         page = context.new_page()
         try:
-            try:
-                with page.expect_response(lambda response: '/aweme/v1/web/aweme/post/' in response.url and response.status == 200, timeout=self.timeout_ms) as response_info:
-                    page.goto(profile_url, wait_until='domcontentloaded', timeout=self.timeout_ms)
-                data = response_info.value.json()
-                aweme_list = data.get('aweme_list') if isinstance(data, dict) else None
-                if aweme_list:
-                    return build_render_data_html({'aweme_list': aweme_list})
-            except Exception:
-                page.goto(profile_url, wait_until='domcontentloaded', timeout=self.timeout_ms)
-
+            page.goto(profile_url, wait_until='domcontentloaded', timeout=self.timeout_ms)
             page.wait_for_timeout(8000)
             return page.content()
         finally:
@@ -75,18 +104,26 @@ class PlaywrightBrowserFetcher:
 
 
 class CreatorPageFetcher:
-    def __init__(self, *, timeout_seconds: int, client=None, browser_fetcher=None) -> None:
+    def __init__(self, *, timeout_seconds: int, client=None, browser_fetcher=None, douyin_cookie: str | None = None) -> None:
         self.timeout_seconds = timeout_seconds
+        self.douyin_cookie = douyin_cookie
+        headers = {
+            'User-Agent': DEFAULT_USER_AGENT,
+            'Accept-Language': 'zh-CN,zh;q=0.9,en;q=0.8',
+            'Referer': 'https://www.douyin.com/',
+        }
+        if douyin_cookie:
+            headers['Cookie'] = douyin_cookie
         self.client = client or httpx.Client(
             timeout=timeout_seconds,
             follow_redirects=True,
-            headers={
-                'User-Agent': DEFAULT_USER_AGENT,
-                'Accept-Language': 'zh-CN,zh;q=0.9,en;q=0.8',
-                'Referer': 'https://www.douyin.com/',
-            },
+            verify=False,
+            headers=headers,
         )
-        self.browser_fetcher = browser_fetcher or PlaywrightBrowserFetcher(timeout_seconds=timeout_seconds)
+        self.browser_fetcher = browser_fetcher or PlaywrightBrowserFetcher(
+            timeout_seconds=timeout_seconds,
+            douyin_cookie=douyin_cookie,
+        )
 
     def _response_needs_browser_fallback(self, response: httpx.Response | object) -> bool:
         text = getattr(response, 'text', '') or ''
@@ -104,7 +141,29 @@ class CreatorPageFetcher:
             return True
         return False
 
+    def _fetch_via_aweme_api(self, profile_url: str) -> str | None:
+        if not self.douyin_cookie:
+            return None
+        sec_user_id = extract_sec_user_id(profile_url)
+        if not sec_user_id:
+            return None
+        api_url = build_aweme_post_api_url(profile_url)
+        response = self.client.get(api_url)
+        response.raise_for_status()
+        data = response.json()
+        aweme_list = data.get('aweme_list') if isinstance(data, dict) else None
+        if aweme_list:
+            return build_render_data_html({'aweme_list': aweme_list})
+        return None
+
     def fetch(self, profile_url: str) -> str:
+        try:
+            api_html = self._fetch_via_aweme_api(profile_url)
+            if api_html:
+                return api_html
+        except Exception:
+            pass
+
         try:
             response = self.client.get(profile_url)
             response.raise_for_status()
