@@ -27,6 +27,7 @@ app/
 creators.json.example
 main.py
 deploy/douyin-feishu-watcher.service
+  install.sh
 ```
 
 ## Local development
@@ -70,15 +71,29 @@ Recommended keys inside `local.runtime.json`:
 
 ## Deployment
 
+### One-click server install (recommended)
+
+On an Ubuntu/Debian server, after cloning the repo and preparing `local.runtime.json` plus `creators.json`, run:
+
+```bash
+bash deploy/install.sh
+```
+
+The script will:
+- install OS dependencies
+- create `.venv`
+- install the Python package
+- install Playwright Chromium and required Linux libraries
+- write the systemd service
+- enable and start the service
+
+### Manual deployment
+
 1. Copy the repo to `/opt/douyin-feishu-watcher`
-2. Create a virtualenv and install dependencies with `pip install -e .`
-3. Run `python -m playwright install --with-deps chromium`
-4. Create `local.runtime.json` and `creators.json`
-5. Copy `deploy/douyin-feishu-watcher.service` to `/etc/systemd/system/`
-5. Run `sudo systemctl daemon-reload`
-6. Run `sudo systemctl enable --now douyin-feishu-watcher`
-7. Verify with `systemctl status douyin-feishu-watcher`
-8. Check runtime output with `journalctl -u douyin-feishu-watcher -f`
+2. Create `local.runtime.json` and `creators.json`
+3. Run `bash deploy/install.sh`
+4. Verify with `systemctl status douyin-feishu-watcher`
+5. Check runtime output with `journalctl -u douyin-feishu-watcher -f`
 
 ## Operational notes
 
