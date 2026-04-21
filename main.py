@@ -20,7 +20,10 @@ def build_job() -> Callable[[], None]:
 
     database = Database(settings.sqlite_path)
     database.initialize()
-    fetcher = CreatorPageFetcher(timeout_seconds=settings.request_timeout_seconds)
+    fetcher = CreatorPageFetcher(
+        timeout_seconds=settings.request_timeout_seconds,
+        douyin_cookie=settings.douyin_cookie,
+    )
     notifier = FeishuNotifier(
         webhook_url=settings.feishu_webhook_url,
         timeout_seconds=settings.request_timeout_seconds,

@@ -1,0 +1,10 @@
+{
+  "feishu_webhook_url": "https://open.feishu.cn/open-apis/bot/v2/hook/replace-me",
+  "feishu_bot_secret": "",
+  "douyin_cookie": "",
+  "creators_file": "creators.json",
+  "sqlite_path": "data/app.db",
+  "poll_interval_minutes": 30,
+  "request_timeout_seconds": 15,
+  "failure_alert_threshold": 3
+}
