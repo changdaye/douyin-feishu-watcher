@@ -5,7 +5,7 @@ After=network.target
 [Service]
 Type=simple
 WorkingDirectory=/opt/douyin-feishu-watcher
-ExecStart=/opt/douyin-feishu-watcher/.venv/bin/python /opt/douyin-feishu-watcher/main.py serve
+ExecStart=/opt/douyin-feishu-watcher/.venv/bin/douyin-feishu-watcher serve
 Restart=always
 RestartSec=5
 
