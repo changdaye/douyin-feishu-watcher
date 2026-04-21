@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import sqlite3
 from pathlib import Path
+from typing import Optional
 
 from app.models import VideoRecord
 
@@ -39,6 +40,14 @@ class Database:
                 )
                 """
             )
+            conn.execute(
+                """
+                CREATE TABLE IF NOT EXISTS app_state (
+                    state_key TEXT PRIMARY KEY,
+                    state_value TEXT
+                )
+                """
+            )
 
     def has_video(self, video_id: str) -> bool:
         with self.connect() as conn:
@@ -73,7 +82,7 @@ class Database:
                     video.publish_time.isoformat() if video.publish_time else None,
                     video.cover_url,
                     int(notified),
-                    "sent" if notified else "pending",
+                    'sent' if notified else 'pending',
                 ),
             )
 
@@ -89,7 +98,7 @@ class Database:
         new_value = self.get_failure_count(creator_key) + 1
         with self.connect() as conn:
             conn.execute(
-                "INSERT OR REPLACE INTO creator_failures (creator_key, failure_count) VALUES (?, ?)",
+                'INSERT OR REPLACE INTO creator_failures (creator_key, failure_count) VALUES (?, ?)',
                 (creator_key, new_value),
             )
         return new_value
@@ -97,6 +106,21 @@ class Database:
     def reset_failures(self, creator_key: str) -> None:
         with self.connect() as conn:
             conn.execute(
-                "INSERT OR REPLACE INTO creator_failures (creator_key, failure_count) VALUES (?, 0)",
+                'INSERT OR REPLACE INTO creator_failures (creator_key, failure_count) VALUES (?, 0)',
                 (creator_key,),
+            )
+
+    def get_state(self, key: str) -> Optional[str]:
+        with self.connect() as conn:
+            row = conn.execute(
+                'SELECT state_value FROM app_state WHERE state_key = ?',
+                (key,),
+            ).fetchone()
+        return row[0] if row else None
+
+    def set_state(self, key: str, value: str) -> None:
+        with self.connect() as conn:
+            conn.execute(
+                'INSERT OR REPLACE INTO app_state (state_key, state_value) VALUES (?, ?)',
+                (key, value),
             )

@@ -33,3 +33,12 @@ def test_track_creator_failures(tmp_path):
     assert db.record_failure("https://example.com/alice") == 2
     db.reset_failures("https://example.com/alice")
     assert db.get_failure_count("https://example.com/alice") == 0
+
+
+def test_state_storage_round_trip(tmp_path):
+    db = Database(tmp_path / "app.db")
+    db.initialize()
+
+    assert db.get_state("last_heartbeat_at") is None
+    db.set_state("last_heartbeat_at", "2026-04-21T07:00:00+00:00")
+    assert db.get_state("last_heartbeat_at") == "2026-04-21T07:00:00+00:00"

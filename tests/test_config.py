@@ -19,6 +19,9 @@ def test_load_settings_defaults(tmp_path, monkeypatch):
     assert settings.failure_alert_threshold == 3
     assert settings.feishu_bot_secret is None
     assert settings.douyin_cookie is None
+    assert settings.heartbeat_enabled is True
+    assert settings.heartbeat_interval_hours == 6
+    assert settings.startup_notification_enabled is True
 
 
 def test_load_settings_reads_local_json_file(tmp_path, monkeypatch):
@@ -34,6 +37,9 @@ def test_load_settings_reads_local_json_file(tmp_path, monkeypatch):
                 'poll_interval_minutes': 45,
                 'request_timeout_seconds': 21,
                 'failure_alert_threshold': 5,
+                'heartbeat_enabled': False,
+                'heartbeat_interval_hours': 12,
+                'startup_notification_enabled': False,
             },
             ensure_ascii=False,
         ),
@@ -55,6 +61,9 @@ def test_load_settings_reads_local_json_file(tmp_path, monkeypatch):
     assert settings.poll_interval_minutes == 45
     assert settings.request_timeout_seconds == 21
     assert settings.failure_alert_threshold == 5
+    assert settings.heartbeat_enabled is False
+    assert settings.heartbeat_interval_hours == 12
+    assert settings.startup_notification_enabled is False
 
 
 def test_load_settings_reads_local_env_file_when_json_missing(tmp_path, monkeypatch):

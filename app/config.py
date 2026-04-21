@@ -4,7 +4,7 @@ import json
 import os
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any, Optional
 
 from app.models import Creator
 
@@ -19,6 +19,9 @@ class AppConfig:
     poll_interval_minutes: int = 30
     request_timeout_seconds: int = 15
     failure_alert_threshold: int = 3
+    heartbeat_enabled: bool = True
+    heartbeat_interval_hours: int = 6
+    startup_notification_enabled: bool = True
 
 
 DEFAULT_JSON_CONFIG_CANDIDATES = [
@@ -76,6 +79,14 @@ def _get_config_value(name: str, default: Optional[str] = None) -> Any:
     return default
 
 
+def _to_bool(value: Any, default: bool) -> bool:
+    if value is None:
+        return default
+    if isinstance(value, bool):
+        return value
+    return str(value).strip().lower() not in {'0', 'false', 'no', 'off'}
+
+
 def load_settings() -> AppConfig:
     return AppConfig(
         feishu_webhook_url=_get_config_value('FEISHU_WEBHOOK_URL'),
@@ -86,6 +97,9 @@ def load_settings() -> AppConfig:
         poll_interval_minutes=int(str(_get_config_value('POLL_INTERVAL_MINUTES', '30') or '30')),
         request_timeout_seconds=int(str(_get_config_value('REQUEST_TIMEOUT_SECONDS', '15') or '15')),
         failure_alert_threshold=int(str(_get_config_value('FAILURE_ALERT_THRESHOLD', '3') or '3')),
+        heartbeat_enabled=_to_bool(_get_config_value('HEARTBEAT_ENABLED', 'true'), True),
+        heartbeat_interval_hours=int(str(_get_config_value('HEARTBEAT_INTERVAL_HOURS', '6') or '6')),
+        startup_notification_enabled=_to_bool(_get_config_value('STARTUP_NOTIFICATION_ENABLED', 'true'), True),
     )
 
 

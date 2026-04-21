@@ -93,3 +93,9 @@ class FeishuNotifier:
 
     def send_alert(self, text: str) -> None:
         self._post({"msg_type": "text", "content": {"text": text}})
+
+    def send_heartbeat(self, text: str) -> None:
+        self._post({"msg_type": "text", "content": {"text": text}})
+
+    def send_startup(self, text: str) -> None:
+        self._post({"msg_type": "text", "content": {"text": text}})
