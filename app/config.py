@@ -9,7 +9,7 @@ from typing import Any, Optional
 from app.models import Creator
 
 
-@dataclass(slots=True)
+@dataclass
 class AppConfig:
     feishu_webhook_url: Optional[str]
     feishu_bot_secret: Optional[str]

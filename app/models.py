@@ -3,14 +3,14 @@ from datetime import datetime
 from typing import Optional
 
 
-@dataclass(slots=True)
+@dataclass
 class Creator:
     name: str
     profile_url: str
     enabled: bool = True
 
 
-@dataclass(slots=True)
+@dataclass
 class VideoRecord:
     creator_name: str
     video_id: str

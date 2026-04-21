@@ -6,7 +6,7 @@ from typing import Iterable, Optional
 from app.models import Creator
 
 
-@dataclass(slots=True)
+@dataclass
 class PollResult:
     creator_name: str
     new_video_ids: list[str]
