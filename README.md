@@ -271,3 +271,10 @@ sqlite3 data/app.db "select creator_name, count(*) from videos group by creator_
 - 大规模高并发抓取
 - 无 Cookie 的公开大规模采集
 - 需要复杂后台管理系统的场景
+
+
+## 火山云部署手册
+
+如果你需要单独的火山云部署说明，请查看：
+
+- `docs/huoshan-deployment.md`
